@@ -11,3 +11,53 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model ActivityType {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  scope Int
+
+  items ActivityItem[]
+
+  @@index([scope])
+}
+
+model ActivityItem {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  unit String
+
+  typeId     Int
+  type       ActivityType     @relation(fields: [typeId], references: [id])
+  factors    EmissionFactor[]
+  activities Activity[]
+
+  @@index([typeId])
+}
+
+model EmissionFactor {
+  id     Int          @id @default(autoincrement())
+  itemId Int
+  item   ActivityItem @relation(fields: [itemId], references: [id])
+
+  value     Float
+  validFrom DateTime
+  validTo   DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([itemId, validFrom, validTo])
+}
+
+model Activity {
+  id     Int          @id @default(autoincrement())
+  date   DateTime
+  amount Float
+  itemId Int
+  item   ActivityItem @relation(fields: [itemId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([itemId])
+}
