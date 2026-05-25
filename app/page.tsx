@@ -1,20 +1,22 @@
 /**
  * 대시보드 메인 페이지 — RSC entry point.
  *
- * Next.js 16 best practice (공식 docs `fetching-data` / `backend-for-frontend`):
- *  - Server Component에서 ORM 직접 호출 (credentials/쿼리 로직이 클라이언트 번들 외부)
+ * Next.js 16 best practice (공식 docs):
+ *  - Server Component에서 ORM 직접 호출
+ *  - searchParams prop으로 URL 필터 받음 (database 필터링은 searchParams 정석)
  *  - await 없이 promise만 시작 → parallel fetching
  *  - 자식 client component가 use() API로 promise resolve → Suspense가 자동 처리
- *  - SectionBoundary가 섹션별 fault isolation (한 섹션 실패 ≠ 전체 차단)
+ *  - SectionBoundary가 섹션별 fault isolation
  *
- * 폐기된 것:
- *  - Route Handler: 외부 클라이언트 없으므로 BFF 패턴 불필요
- *  - TanStack Query: community option이며 RSC + use() API로 충분
- *
- * 2b 단계에서 ScopeChart/MonthlyTrend/Hotspot/Table Section을 같은 패턴으로 추가.
+ * 폐기:
+ *  - Route Handler (외부 클라이언트 없음)
+ *  - TanStack Query (RSC + use() API로 충분)
+ *  - Zustand (URL searchParams가 SSOT)
  */
 import { prisma } from "@/lib/prisma";
+import { buildActivityWhere, type ActivityFilters } from "@/lib/filters";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { FilterBar } from "@/components/dashboard/FilterBar";
 import { KpiCardsSection } from "@/components/dashboard/KpiCardsSection";
 import { KpiSkeleton } from "@/components/dashboard/KpiSkeleton";
 import { ScopeChartSection } from "@/components/dashboard/ScopeChartSection";
@@ -27,10 +29,25 @@ import { ActivityTableSection } from "@/components/dashboard/ActivityTableSectio
 import { ActivityTableSkeleton } from "@/components/dashboard/ActivityTableSkeleton";
 import { SectionBoundary } from "@/components/common/SectionBoundary";
 
-export default function DashboardPage() {
-  // await 없이 promise 시작 → 두 쿼리 병렬 (waterfall 방지)
-  // 자식 client component가 use()로 resolve, Suspense가 로딩 처리
+type Props = {
+  // Next.js 16: searchParams는 Promise. async page에서 await 필요.
+  searchParams: Promise<ActivityFilters>;
+};
+
+export default async function DashboardPage({ searchParams }: Props) {
+  const filters = await searchParams;
+  const where = buildActivityWhere(filters);
+
+  // FilterBar는 select 옵션으로 동기 array가 필요 → await.
+  // ActivityType은 4~5개로 작아 await 비용 미미. 또한 캐싱 친화 (필터 무관).
+  const activityTypes = await prisma.activityType.findMany({
+    orderBy: { scope: "asc" },
+  });
+
+  // 데이터 promise는 await 없이 시작 → 자식이 use()로 받음 (parallel + streaming).
+  // 필터(where)는 activities에만 적용. factors는 시점 매칭용이라 필터 무관.
   const activitiesPromise = prisma.activity.findMany({
+    where,
     include: { item: { include: { type: true } } },
     orderBy: { date: "asc" },
   });
@@ -41,6 +58,7 @@ export default function DashboardPage() {
   return (
     <main className="container mx-auto max-w-7xl space-y-6 p-6">
       <DashboardHeader />
+      <FilterBar activityTypes={activityTypes} />
 
       <SectionBoundary name="KPI" fallback={<KpiSkeleton />}>
         <KpiCardsSection
@@ -57,10 +75,7 @@ export default function DashboardPage() {
           />
         </SectionBoundary>
 
-        <SectionBoundary
-          name="월별 추이"
-          fallback={<MonthlyTrendSkeleton />}
-        >
+        <SectionBoundary name="월별 추이" fallback={<MonthlyTrendSkeleton />}>
           <MonthlyTrendSection
             activitiesPromise={activitiesPromise}
             factorsPromise={factorsPromise}
@@ -75,10 +90,7 @@ export default function DashboardPage() {
         />
       </SectionBoundary>
 
-      <SectionBoundary
-        name="활동 내역"
-        fallback={<ActivityTableSkeleton />}
-      >
+      <SectionBoundary name="활동 내역" fallback={<ActivityTableSkeleton />}>
         <ActivityTableSection
           activitiesPromise={activitiesPromise}
           factorsPromise={factorsPromise}
