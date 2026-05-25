@@ -1,88 +1,44 @@
-"use client";
-
 /**
- * 대시보드 메인 페이지.
+ * 대시보드 메인 페이지 — RSC entry point.
  *
- * 구조:
- *  1. 헤더 (제목 + onboarding 한 줄)
- *  2. KPI 카드 4개
- *  3. 차트 영역 (2b 단계에서 추가)
- *  4. 활동 테이블 (2b 단계에서 추가)
+ * Next.js 16 best practice (공식 docs `fetching-data` / `backend-for-frontend`):
+ *  - Server Component에서 ORM 직접 호출 (credentials/쿼리 로직이 클라이언트 번들 외부)
+ *  - await 없이 promise만 시작 → parallel fetching
+ *  - 자식 client component가 use() API로 promise resolve → Suspense가 자동 처리
+ *  - SectionBoundary가 섹션별 fault isolation (한 섹션 실패 ≠ 전체 차단)
  *
- * 데이터 흐름:
- *  - 페이지가 useActivities/useFactors 한 번씩만 호출
- *  - 받은 데이터를 하위 컴포넌트에 props로 전달
- *  - 각 컴포넌트는 emissions.ts 순수 함수로 자기 view에 필요한 집계만 수행
+ * 폐기된 것:
+ *  - Route Handler: 외부 클라이언트 없으므로 BFF 패턴 불필요
+ *  - TanStack Query: community option이며 RSC + use() API로 충분
+ *
+ * 2b 단계에서 ScopeChart/MonthlyTrend/Hotspot/Table Section을 같은 패턴으로 추가.
  */
-import { useActivities } from "@/hooks/use-activities";
-import { useFactors } from "@/hooks/use-factors";
-import { KpiCards } from "@/components/dashboard/KpiCards";
-import { Skeleton } from "@/components/ui/skeleton";
+import { prisma } from "@/lib/prisma";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { KpiCardsSection } from "@/components/dashboard/KpiCardsSection";
+import { KpiSkeleton } from "@/components/dashboard/KpiSkeleton";
+import { SectionBoundary } from "@/components/common/SectionBoundary";
 
 export default function DashboardPage() {
-  const activitiesQuery = useActivities();
-  const factorsQuery = useFactors();
-
-  const isLoading = activitiesQuery.isLoading || factorsQuery.isLoading;
-  const isError = activitiesQuery.isError || factorsQuery.isError;
-  const activities = activitiesQuery.data ?? [];
-  const factors = factorsQuery.data ?? [];
+  // await 없이 promise 시작 → 두 쿼리 병렬 (waterfall 방지)
+  // 자식 client component가 use()로 resolve, Suspense가 로딩 처리
+  const activitiesPromise = prisma.activity.findMany({
+    include: { item: { include: { type: true } } },
+    orderBy: { date: "asc" },
+  });
+  const factorsPromise = prisma.emissionFactor.findMany({
+    orderBy: [{ itemId: "asc" }, { validFrom: "asc" }],
+  });
 
   return (
     <main className="container mx-auto max-w-7xl space-y-6 p-6">
       <DashboardHeader />
-
-      {isLoading ? (
-        <KpiSkeleton />
-      ) : isError ? (
-        <ErrorBanner
-          message={
-            activitiesQuery.error?.message ??
-            factorsQuery.error?.message ??
-            "데이터 조회 실패"
-          }
+      <SectionBoundary name="KPI" fallback={<KpiSkeleton />}>
+        <KpiCardsSection
+          activitiesPromise={activitiesPromise}
+          factorsPromise={factorsPromise}
         />
-      ) : (
-        <KpiCards activities={activities} factors={factors} />
-      )}
-
-      {/* 2b 단계: 차트 3종 + 활동 테이블 */}
+      </SectionBoundary>
     </main>
-  );
-}
-
-function DashboardHeader() {
-  return (
-    <header className="space-y-1">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        제품 탄소발자국 대시보드
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        월별 활동 데이터로 Scope 2/3 배출량을 추적합니다. 활동 일자에 따라 적절한 시점의 배출계수가 자동 적용됩니다.
-      </p>
-    </header>
-  );
-}
-
-function KpiSkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-28 w-full" />
-      ))}
-    </div>
-  );
-}
-
-function ErrorBanner({ message }: { message: string }) {
-  return (
-    <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-      <p className="font-medium">데이터를 불러올 수 없습니다</p>
-      <p className="mt-1 text-xs">{message}</p>
-      <p className="mt-2 text-xs text-red-600">
-        Docker가 떠 있는지(`docker compose up -d`)와 시드 실행
-        여부(`yarn prisma db seed`)를 확인해주세요.
-      </p>
-    </div>
   );
 }

@@ -1,11 +1,12 @@
-"use client";
-
 /**
  * 대시보드 상단 KPI 카드 4개.
  *  - 총 배출량 (+ 계수 미정의 경고)
  *  - Scope 2 (전기)
  *  - Scope 3 (원소재 + 운송)
  *  - 전년 대비 변화율 (YoY)
+ *
+ * 순수 표현 컴포넌트: props만 받아 렌더 (데이터 페치는 KpiCardsSection).
+ * "use client" 없음 → RSC compatible (이벤트/state 없음). 부모가 client면 client에서 렌더.
  *
  * 핵심: 모든 집계는 lib/emissions.ts 순수 함수 호출 — 비즈니스 로직 중복 0.
  * 탄소 도메인 컬러 시맨틱: 감소(아래 화살표) = 좋음(emerald), 증가(위 화살표) = 나쁨(red).

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,13 +23,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Z+: TanStack Query 폐기 → Provider 불필요. Toaster만 전역 마운트.
+  // mutation 후 상태 갱신은 Server Action + revalidatePath로 처리.
   return (
     <html
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-muted/30">
-        <Providers>{children}</Providers>
+        {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );
