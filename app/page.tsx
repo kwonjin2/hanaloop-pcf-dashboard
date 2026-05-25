@@ -16,6 +16,7 @@
 import { prisma } from "@/lib/prisma";
 import { buildActivityWhere, type ActivityFilters } from "@/lib/filters";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardActions } from "@/components/dashboard/DashboardActions";
 import { FilterBar } from "@/components/dashboard/FilterBar";
 import { KpiCardsSection } from "@/components/dashboard/KpiCardsSection";
 import { KpiSkeleton } from "@/components/dashboard/KpiSkeleton";
@@ -38,11 +39,12 @@ export default async function DashboardPage({ searchParams }: Props) {
   const filters = await searchParams;
   const where = buildActivityWhere(filters);
 
-  // FilterBar는 select 옵션으로 동기 array가 필요 → await.
-  // ActivityType은 4~5개로 작아 await 비용 미미. 또한 캐싱 친화 (필터 무관).
-  const activityTypes = await prisma.activityType.findMany({
-    orderBy: { scope: "asc" },
-  });
+  // FilterBar/DashboardActions의 select 옵션 → 동기 array 필요 → await.
+  // ActivityType / ActivityItem 합쳐서 10개 미만이라 await 비용 미미.
+  const [activityTypes, activityItems] = await Promise.all([
+    prisma.activityType.findMany({ orderBy: { scope: "asc" } }),
+    prisma.activityItem.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   // 데이터 promise는 await 없이 시작 → 자식이 use()로 받음 (parallel + streaming).
   // 필터(where)는 activities에만 적용. factors는 시점 매칭용이라 필터 무관.
@@ -57,7 +59,13 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   return (
     <main className="container mx-auto max-w-7xl space-y-6 p-6">
-      <DashboardHeader />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <DashboardHeader />
+        <DashboardActions
+          activityItems={activityItems}
+          activityTypes={activityTypes}
+        />
+      </div>
       <FilterBar activityTypes={activityTypes} />
 
       <SectionBoundary name="KPI" fallback={<KpiSkeleton />}>
