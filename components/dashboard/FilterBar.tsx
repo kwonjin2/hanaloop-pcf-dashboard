@@ -87,6 +87,7 @@ export function FilterBar({ activityTypes }: Props) {
             type="date"
             value={currentFrom}
             onChange={(e) => updateFilter("from", e.target.value)}
+            onClick={(e) => e.currentTarget.showPicker?.()}
             className="w-40"
           />
         </div>
@@ -101,6 +102,7 @@ export function FilterBar({ activityTypes }: Props) {
             type="date"
             value={currentTo}
             onChange={(e) => updateFilter("to", e.target.value)}
+            onClick={(e) => e.currentTarget.showPicker?.()}
             className="w-40"
           />
         </div>

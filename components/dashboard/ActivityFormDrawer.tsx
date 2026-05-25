@@ -130,13 +130,15 @@ export function ActivityFormDrawer({
           </DrawerHeader>
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-4">
-            {/* 날짜 */}
+            {/* 날짜 — input 클릭 시 native date picker 강제 open
+                (shadcn Input padding이 calendar icon 클릭 영역을 가림 방지) */}
             <div className="space-y-1.5">
               <Label htmlFor="activity-date">날짜</Label>
               <Input
                 id="activity-date"
                 type="date"
                 {...form.register("date")}
+                onClick={(e) => e.currentTarget.showPicker?.()}
               />
               {form.formState.errors.date && (
                 <p className="text-xs text-red-600">
