@@ -1,8 +1,9 @@
 /**
- * 대시보드 상단 KPI 카드 4개.
+ * 대시보드 상단 KPI 카드 5개.
  *  - 총 배출량 (+ 계수 미정의 경고)
- *  - Scope 2 (전기)
- *  - Scope 3 (원소재 + 운송)
+ *  - Scope 1 (직접 배출) — 데이터 없으면 "측정 데이터 없음" 명시 (ESG 보고 표준 = 완전성)
+ *  - Scope 2 (구매 에너지)
+ *  - Scope 3 (기타 간접)
  *  - 전년 대비 변화율 (YoY)
  *
  * 순수 표현 컴포넌트: props만 받아 렌더 (데이터 페치는 KpiCardsSection).
@@ -32,6 +33,7 @@ export function KpiCards({ activities, factors }: Props) {
   const scopeData = emissionByScope(activities, factors);
   const yearly = emissionByYear(activities, factors);
 
+  const scope1 = scopeData.find((s) => s.scope === 1)?.total ?? 0;
   const scope2 = scopeData.find((s) => s.scope === 2)?.total ?? 0;
   const scope3 = scopeData.find((s) => s.scope === 3)?.total ?? 0;
 
@@ -44,7 +46,7 @@ export function KpiCards({ activities, factors }: Props) {
       : null;
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <KpiCard
         label="총 배출량"
         value={formatEmission(total)}
@@ -55,9 +57,16 @@ export function KpiCards({ activities, factors }: Props) {
         }
       />
       <KpiCard
-        label="Scope 2 (전기)"
+        label="Scope 1 (직접 배출)"
+        value={formatEmission(scope1)}
+        sublabel={
+          scope1 > 0 ? "연료 직접 연소 등" : "ⓘ 측정 데이터 없음"
+        }
+      />
+      <KpiCard
+        label="Scope 2 (구매 에너지)"
         value={formatEmission(scope2)}
-        sublabel="구매 에너지로 인한 간접 배출"
+        sublabel="전기 등 외부 에너지"
       />
       <KpiCard
         label="Scope 3 (기타 간접)"

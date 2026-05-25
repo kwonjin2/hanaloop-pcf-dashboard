@@ -24,6 +24,13 @@ async function main() {
   console.log("🌱 시드 시작...");
 
   // ── 1. 활동 유형 (Scope 분류) ──
+  // 직접 배출(Scope 1)은 명세 데이터에 없지만 ESG 보고 표준상 모든 Scope 분류 노출 필요
+  // ActivityType만 추가 (Activity 0건) → KPI/도넛에 "측정 데이터 없음" 명시
+  await prisma.activityType.upsert({
+    where: { name: "직접 배출" },
+    update: {},
+    create: { name: "직접 배출", scope: 1 },
+  });
   const electric = await prisma.activityType.upsert({
     where: { name: "전기" },
     update: {},
