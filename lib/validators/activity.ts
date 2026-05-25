@@ -7,10 +7,10 @@
  *
  * 같은 스키마 한 번 정의 → 두 곳에서 사용 (DRY).
  *
- * `z.coerce.number()` 사용 이유:
- *  - HTML form input의 value는 항상 string
- *  - amount를 number로 다루려면 변환 필요
- *  - coerce가 변환 + 검증 한 번에 처리
+ * 숫자 변환은 RHF의 `valueAsNumber: true`로 처리 (zod coerce 안 씀).
+ *  - coerce 사용 시 zod의 input 타입(unknown)과 output 타입(number)이 분리되어
+ *    RHF 타입 추론(Resolver)과 충돌. number 직접 검증이 호환성 좋음.
+ *  - server action 호출 전 RHF가 typed number로 전달 → server 재검증도 number 기대
  */
 import { z } from "zod";
 
@@ -23,13 +23,13 @@ export const createActivitySchema = z.object({
       message: "유효한 날짜가 아닙니다",
     }),
 
-  // 양수 number (0은 의미 없음)
-  amount: z.coerce
+  // 양수 number (0은 의미 없음 → "0보다 커야" 메시지로 0 default도 잡힘)
+  amount: z
     .number({ message: "활동량은 숫자여야 합니다" })
     .positive("활동량은 0보다 커야 합니다"),
 
-  // 활동 항목 ID (양의 정수)
-  itemId: z.coerce
+  // 활동 항목 ID (양의 정수, 0은 "미선택"으로 간주)
+  itemId: z
     .number({ message: "활동 항목을 선택해주세요" })
     .int()
     .positive("활동 항목을 선택해주세요"),
