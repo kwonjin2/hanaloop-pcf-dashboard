@@ -17,6 +17,8 @@ import { prisma } from "@/lib/prisma";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { KpiCardsSection } from "@/components/dashboard/KpiCardsSection";
 import { KpiSkeleton } from "@/components/dashboard/KpiSkeleton";
+import { ScopeChartSection } from "@/components/dashboard/ScopeChartSection";
+import { ScopeChartSkeleton } from "@/components/dashboard/ScopeChartSkeleton";
 import { SectionBoundary } from "@/components/common/SectionBoundary";
 
 export default function DashboardPage() {
@@ -33,8 +35,16 @@ export default function DashboardPage() {
   return (
     <main className="container mx-auto max-w-7xl space-y-6 p-6">
       <DashboardHeader />
+
       <SectionBoundary name="KPI" fallback={<KpiSkeleton />}>
         <KpiCardsSection
+          activitiesPromise={activitiesPromise}
+          factorsPromise={factorsPromise}
+        />
+      </SectionBoundary>
+
+      <SectionBoundary name="Scope 분포" fallback={<ScopeChartSkeleton />}>
+        <ScopeChartSection
           activitiesPromise={activitiesPromise}
           factorsPromise={factorsPromise}
         />
