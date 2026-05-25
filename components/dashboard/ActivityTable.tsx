@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DeleteActivityButton } from "./DeleteActivityButton";
 
 type Props = {
   activities: ActivityWithRelations[];
@@ -57,6 +58,7 @@ export function ActivityTable({ activities, factors }: Props) {
                   <TableHead className="text-right">활동량</TableHead>
                   <TableHead className="text-right">적용 계수</TableHead>
                   <TableHead className="text-right">배출량</TableHead>
+                  <TableHead className="w-12" aria-label="작업" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -65,6 +67,7 @@ export function ActivityTable({ activities, factors }: Props) {
                     activity,
                     factors,
                   );
+                  const label = `${formatDate(activity.date)} · ${activity.item.name} · ${formatAmount(activity.amount, activity.item.unit)}`;
                   return (
                     <TableRow key={activity.id}>
                       <TableCell className="font-mono text-xs">
@@ -82,6 +85,9 @@ export function ActivityTable({ activities, factors }: Props) {
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         {factor ? formatEmission(value) : "계수 미정의"}
+                      </TableCell>
+                      <TableCell>
+                        <DeleteActivityButton id={activity.id} label={label} />
                       </TableCell>
                     </TableRow>
                   );
