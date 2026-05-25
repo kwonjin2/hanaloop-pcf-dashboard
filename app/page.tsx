@@ -19,6 +19,12 @@ import { KpiCardsSection } from "@/components/dashboard/KpiCardsSection";
 import { KpiSkeleton } from "@/components/dashboard/KpiSkeleton";
 import { ScopeChartSection } from "@/components/dashboard/ScopeChartSection";
 import { ScopeChartSkeleton } from "@/components/dashboard/ScopeChartSkeleton";
+import { MonthlyTrendSection } from "@/components/dashboard/MonthlyTrendSection";
+import { MonthlyTrendSkeleton } from "@/components/dashboard/MonthlyTrendSkeleton";
+import { HotspotSection } from "@/components/dashboard/HotspotSection";
+import { HotspotSkeleton } from "@/components/dashboard/HotspotSkeleton";
+import { ActivityTableSection } from "@/components/dashboard/ActivityTableSection";
+import { ActivityTableSkeleton } from "@/components/dashboard/ActivityTableSkeleton";
 import { SectionBoundary } from "@/components/common/SectionBoundary";
 
 export default function DashboardPage() {
@@ -43,8 +49,37 @@ export default function DashboardPage() {
         />
       </SectionBoundary>
 
-      <SectionBoundary name="Scope 분포" fallback={<ScopeChartSkeleton />}>
-        <ScopeChartSection
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SectionBoundary name="Scope 분포" fallback={<ScopeChartSkeleton />}>
+          <ScopeChartSection
+            activitiesPromise={activitiesPromise}
+            factorsPromise={factorsPromise}
+          />
+        </SectionBoundary>
+
+        <SectionBoundary
+          name="월별 추이"
+          fallback={<MonthlyTrendSkeleton />}
+        >
+          <MonthlyTrendSection
+            activitiesPromise={activitiesPromise}
+            factorsPromise={factorsPromise}
+          />
+        </SectionBoundary>
+      </div>
+
+      <SectionBoundary name="Hotspot" fallback={<HotspotSkeleton />}>
+        <HotspotSection
+          activitiesPromise={activitiesPromise}
+          factorsPromise={factorsPromise}
+        />
+      </SectionBoundary>
+
+      <SectionBoundary
+        name="활동 내역"
+        fallback={<ActivityTableSkeleton />}
+      >
+        <ActivityTableSection
           activitiesPromise={activitiesPromise}
           factorsPromise={factorsPromise}
         />
