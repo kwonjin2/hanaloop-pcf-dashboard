@@ -35,6 +35,26 @@ yarn dev
 
 ---
 
+## ⏱️ 작업 소요 시간
+
+**총**: 4일
+
+| 단계 | 주요 결과물 |
+|---|---|
+| 사전 도메인 학습 + 스택 결정 | PCF/GHG Scope 학습, 스택 비교, AGENTS.md 작성 |
+| 셋업 + 인프라 | Next.js 16, Postgres + Docker, Prisma 7, shadcn |
+| 도메인 모델 + 계산 엔진 | 스키마/마이그레이션, 시드, 시점 매칭 로직 + 단위 테스트 |
+| 대시보드 + 필터 (RSC 리팩토링) | KPI/차트/테이블, 필터, RSC + `use()` + Server Action 전환 |
+| 입력 폼 + Excel 임포트 + Tooltip + 마무리 | RHF+Zod 입력/삭제, SheetJS 임포트, 도메인 용어 Tooltip, README |
+
+### 시간이 많이 소요된 부분
+
+1. **Prisma + DB 스키마 설계 (전부 처음)** — ORM 자체가 처음. 관계 모델(`ActivityType` ↔ `ActivityItem` 분리, `EmissionFactor` 시점 버전 관리), 마이그레이션 흐름, 시드 데이터 작성 모두 학습하면서 진행. 도메인을 데이터 모델로 떨어뜨리는 사고 과정이 가장 시간이 걸림.
+2. **Excel 파일 업로드 흐름** — `<input type="file">` 자체는 이전 프로젝트에서 이미지 업로드로 다뤘지만, `File → ArrayBuffer`로 Server Action에 binary 전달, SheetJS xlsx 파싱, 행별 검증 + composite key Set 기반 dedupe는 모두 첫 적용. 학습 + 시행착오에 시간 들었음.
+3. **RSC + Server Action 패러다임 학습** — TanStack Query / Route Handler 기반에서 Next.js 16 정석(RSC + `use()` API + Server Action)으로 전환. SSR 충돌 디버깅과 공식 docs 검증 반복.
+
+---
+
 ## 🖼️ 데모
 
 ### 핵심 화면 요약
