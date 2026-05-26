@@ -36,15 +36,39 @@ type Props = {
 };
 
 export default async function DashboardPage({ searchParams }: Props) {
-  const filters = await searchParams;
+  const rawFilters = await searchParams;
+
+  // ESG 보고는 annual report가 표준 → 사용자가 date 관련 param 명시 안 했으면
+  // 자동으로 최신 연도 default 적용. 시드/임포트 변경에 자동 대응.
+  const hasExplicitDate =
+    "year" in rawFilters || "from" in rawFilters || "to" in rawFilters;
+  let filters = rawFilters;
+  if (!hasExplicitDate) {
+    const latest = await prisma.activity.findFirst({
+      orderBy: { date: "desc" },
+      select: { date: true },
+    });
+    if (latest) {
+      filters = { ...rawFilters, year: String(latest.date.getFullYear()) };
+    }
+  }
+
   const where = buildActivityWhere(filters);
 
   // FilterBar/DashboardActions의 select 옵션 → 동기 array 필요 → await.
   // ActivityType / ActivityItem 합쳐서 10개 미만이라 await 비용 미미.
-  const [activityTypes, activityItems] = await Promise.all([
+  // availableYears: 데이터에 존재하는 연도 목록 (FilterBar 연도 select)
+  const [activityTypes, activityItems, allDates] = await Promise.all([
     prisma.activityType.findMany({ orderBy: { scope: "asc" } }),
     prisma.activityItem.findMany({ orderBy: { name: "asc" } }),
+    prisma.activity.findMany({
+      select: { date: true },
+      orderBy: { date: "desc" },
+    }),
   ]);
+  const availableYears = Array.from(
+    new Set(allDates.map((a) => a.date.getFullYear())),
+  ).sort((a, b) => b - a); // 최신 연도 먼저
 
   // 데이터 promise는 await 없이 시작 → 자식이 use()로 받음 (parallel + streaming).
   // 필터(where)는 activities에만 적용. factors는 시점 매칭용이라 필터 무관.
@@ -66,7 +90,10 @@ export default async function DashboardPage({ searchParams }: Props) {
           activityTypes={activityTypes}
         />
       </div>
-      <FilterBar activityTypes={activityTypes} />
+      <FilterBar
+        activityTypes={activityTypes}
+        availableYears={availableYears}
+      />
 
       <SectionBoundary name="KPI" fallback={<KpiSkeleton />}>
         <KpiCardsSection

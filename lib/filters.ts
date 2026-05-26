@@ -10,11 +10,15 @@
 import { Prisma } from "@/generated/prisma/client";
 
 export type ActivityFilters = {
+  year?: string; // "2024" | "2025" | "all" | undefined (undefined → page에서 latestYear default 적용)
   scope?: string;
   typeId?: string;
-  from?: string; // YYYY-MM-DD
-  to?: string; // YYYY-MM-DD
+  from?: string; // YYYY-MM-DD (year 없을 때만 적용)
+  to?: string;
 };
+
+/** "전체 기간" 명시 sentinel — 다년 누적 보기 */
+export const YEAR_ALL = "all";
 
 export function buildActivityWhere(
   filters: ActivityFilters,
@@ -31,14 +35,30 @@ export function buildActivityWhere(
     };
   }
 
-  // 날짜 범위 (from/to 둘 다 선택적, 한쪽만 있어도 OK)
-  const from = parseDate(filters.from);
-  const to = parseDate(filters.to);
-  if (from || to) {
-    where.date = {
-      ...(from && { gte: from }),
-      ...(to && { lte: to }),
-    };
+  // 날짜 처리 우선순위: year > from/to
+  // - year=숫자: 그 연도 1/1~12/31
+  // - year="all": date 필터 미적용 (전체 기간)
+  // - year 없음: from/to 폴백
+  if (filters.year === YEAR_ALL) {
+    // 명시적 전체 — date 필터 추가 안 함
+  } else {
+    const year = parsePositiveInt(filters.year);
+    if (year !== null && year >= 1900 && year <= 2100) {
+      where.date = {
+        gte: new Date(`${year}-01-01T00:00:00`),
+        lte: new Date(`${year}-12-31T23:59:59.999`),
+      };
+    } else {
+      // year 무효 → from/to 폴백
+      const from = parseDate(filters.from);
+      const to = parseDate(filters.to);
+      if (from || to) {
+        where.date = {
+          ...(from && { gte: from }),
+          ...(to && { lte: to }),
+        };
+      }
+    }
   }
 
   return where;
