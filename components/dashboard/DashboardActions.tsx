@@ -12,7 +12,7 @@
 import { useState } from "react";
 import { Plus, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ActivityFormDrawer } from "./ActivityFormDrawer";
+import { ActivityFormDialog } from "./ActivityFormDialog";
 import { ImportExcelDialog } from "./ImportExcelDialog";
 
 type ActivityItemOption = {
@@ -53,7 +53,7 @@ export function DashboardActions({ activityItems, activityTypes }: Props) {
       </Button>
 
       <ImportExcelDialog open={importOpen} onOpenChange={setImportOpen} />
-      <ActivityFormDrawer
+      <ActivityFormDialog
         open={activityOpen}
         onOpenChange={setActivityOpen}
         activityItems={activityItems}
