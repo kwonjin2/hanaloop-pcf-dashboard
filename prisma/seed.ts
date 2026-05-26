@@ -24,9 +24,9 @@ async function main() {
   console.log("🌱 시드 시작...");
 
   // ── 1. 활동 유형 (Scope 분류) ──
-  // 직접 배출(Scope 1)은 명세 데이터에 없지만 ESG 보고 표준상 모든 Scope 분류 노출 필요
-  // ActivityType만 추가 (Activity 0건) → KPI/도넛에 "측정 데이터 없음" 명시
-  await prisma.activityType.upsert({
+  // 직접 배출(Scope 1)은 명세 Excel에 없지만 ESG 완전성 demo를 위해 임의 추가.
+  // 활동 항목 1개 + 시점별 계수 2개 + 활동 3건 (아래에서) → KPI/도넛/Hotspot/테이블 자동 노출.
+  const direct = await prisma.activityType.upsert({
     where: { name: "직접 배출" },
     update: {},
     create: { name: "직접 배출", scope: 1 },
@@ -48,6 +48,12 @@ async function main() {
   });
 
   // ── 2. 활동 항목 (운영 단위) ──
+  // 회사 차량 휘발유: Scope 1 demo용 임의 항목 (한국 환경부 표준 기준 계수)
+  const carFuel = await prisma.activityItem.upsert({
+    where: { name: "회사 차량 휘발유" },
+    update: {},
+    create: { name: "회사 차량 휘발유", unit: "L", typeId: direct.id },
+  });
   const kepco = await prisma.activityItem.upsert({
     where: { name: "한국전력" },
     update: {},
@@ -74,6 +80,19 @@ async function main() {
   await prisma.emissionFactor.deleteMany({});
   await prisma.emissionFactor.createMany({
     data: [
+      // 회사 차량 휘발유 (Scope 1) — 한국 환경부 기준 ~2.31 kgCO₂e/L
+      {
+        itemId: carFuel.id,
+        value: 2.31,
+        validFrom: new Date("2024-01-01"),
+        validTo: new Date("2024-12-31"),
+      },
+      {
+        itemId: carFuel.id,
+        value: 2.3,
+        validFrom: new Date("2025-01-01"),
+        validTo: null,
+      },
       // 한국전력
       {
         itemId: kepco.id,
@@ -133,6 +152,11 @@ async function main() {
   // 명세의 30행과 동일한 패턴이지만 2024년 일자로 — Excel 임포트(2025년) 시 중복 없음
   await prisma.activity.deleteMany({});
   const activities = [
+    // 직접 배출 / 회사 차량 휘발유 (3건) — Scope 1 demo, 2024 historical 일관
+    { date: new Date("2024-03-01"), amount: 50, itemId: carFuel.id },
+    { date: new Date("2024-07-01"), amount: 60, itemId: carFuel.id },
+    { date: new Date("2024-11-01"), amount: 55, itemId: carFuel.id },
+
     // 전기 / 한국전력 (9건)
     { date: new Date("2024-01-01"), amount: 110, itemId: kepco.id },
     { date: new Date("2024-02-01"), amount: 112, itemId: kepco.id },
@@ -174,7 +198,7 @@ async function main() {
   await prisma.activity.createMany({ data: activities });
 
   console.log(
-    `✅ 시드 완료: 유형 3개, 항목 4개, 계수 8개 (2024/2025 버전), 활동 ${activities.length}건 (2024)`,
+    `✅ 시드 완료: 유형 4개(S1/2/3), 항목 5개, 계수 10개 (2024/2025 버전), 활동 ${activities.length}건 (Scope 1 demo 3건 포함)`,
   );
 }
 
