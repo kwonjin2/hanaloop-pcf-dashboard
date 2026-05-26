@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DeleteActivityButton } from "./DeleteActivityButton";
+import { InfoTooltip } from "@/components/common/TermTooltip";
 
 type Props = {
   activities: ActivityWithRelations[];
@@ -53,11 +54,26 @@ export function ActivityTable({ activities, factors }: Props) {
               <TableHeader>
                 <TableRow>
                   <TableHead>일자</TableHead>
-                  <TableHead>Scope</TableHead>
+                  <TableHead>
+                    <span className="inline-flex items-center gap-1">
+                      Scope
+                      <InfoTooltip term="ghgProtocol" />
+                    </span>
+                  </TableHead>
                   <TableHead>항목</TableHead>
                   <TableHead className="text-right">활동량</TableHead>
-                  <TableHead className="text-right">적용 계수</TableHead>
-                  <TableHead className="text-right">배출량</TableHead>
+                  <TableHead className="text-right">
+                    <span className="inline-flex items-center gap-1">
+                      적용 계수
+                      <InfoTooltip term="emissionFactor" />
+                    </span>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <span className="inline-flex items-center gap-1">
+                      배출량
+                      <InfoTooltip term="kgCO2e" />
+                    </span>
+                  </TableHead>
                   <TableHead className="w-12" aria-label="작업" />
                 </TableRow>
               </TableHeader>

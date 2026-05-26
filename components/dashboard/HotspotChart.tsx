@@ -22,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { TermTooltip } from "@/components/common/TermTooltip";
 import {
   Bar,
   BarChart,
@@ -43,7 +44,10 @@ export function HotspotChart({ activities, factors }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Hotspot — 항목별 배출 Top</CardTitle>
+        <CardTitle className="flex items-center gap-1 text-base">
+          <TermTooltip term="hotspot">Hotspot</TermTooltip>
+          <span>— 항목별 배출 Top</span>
+        </CardTitle>
         <CardDescription>가장 큰 배출원부터 — 감축 우선순위</CardDescription>
       </CardHeader>
       <CardContent className="h-72">

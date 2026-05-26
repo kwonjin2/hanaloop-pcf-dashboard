@@ -22,6 +22,8 @@ import {
 import { formatEmission, formatNumber } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { InfoTooltip } from "@/components/common/TermTooltip";
+import type { GlossaryTerm } from "@/lib/glossary";
 
 type Props = {
   activities: ActivityWithRelations[];
@@ -49,6 +51,7 @@ export function KpiCards({ activities, factors }: Props) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <KpiCard
         label="총 배출량"
+        infoTerm="kgCO2e"
         value={formatEmission(total)}
         sublabel={
           unmatchedCount > 0
@@ -58,6 +61,7 @@ export function KpiCards({ activities, factors }: Props) {
       />
       <KpiCard
         label="Scope 1 (직접 배출)"
+        infoTerm="scope1"
         value={formatEmission(scope1)}
         sublabel={
           scope1 > 0 ? "연료 직접 연소 등" : "ⓘ 측정 데이터 없음"
@@ -65,16 +69,19 @@ export function KpiCards({ activities, factors }: Props) {
       />
       <KpiCard
         label="Scope 2 (구매 에너지)"
+        infoTerm="scope2"
         value={formatEmission(scope2)}
         sublabel="전기 등 외부 에너지"
       />
       <KpiCard
         label="Scope 3 (기타 간접)"
+        infoTerm="scope3"
         value={formatEmission(scope3)}
         sublabel="원소재 + 운송"
       />
       <KpiCard
         label="전년 대비"
+        infoTerm="yoy"
         value={
           yoyPct === null
             ? "—"
@@ -104,17 +111,20 @@ function KpiCard({
   value,
   sublabel,
   trendIcon,
+  infoTerm,
 }: {
   label: string;
   value: string;
   sublabel: string;
   trendIcon?: React.ReactNode;
+  infoTerm?: GlossaryTerm;
 }) {
   return (
     <Card size="sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
           {label}
+          {infoTerm && <InfoTooltip term={infoTerm} />}
           {trendIcon}
         </CardTitle>
       </CardHeader>
